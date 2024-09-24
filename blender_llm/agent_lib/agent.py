@@ -169,3 +169,75 @@ class Agent:
             and was not able to correct itself within allowed api calls"""
         )
         raise LLMFaileToCreateValidJson
+
+class VisionAgent:
+    def __init__(
+        self,
+        model: str,
+        system_prompt: str,
+        fidelity: str = "auto",
+        opena_ai_token: str = None,
+    ):
+        """
+
+        """
+        logger.info(f"Creating new agent for model: {model}")
+        self.openai_model = model
+        self.client = OpenAI()
+        self.system_prompt = system_prompt
+        self.fidelity = fidelity
+        self.conversation = [
+            {"role": "system", "content": system_prompt},
+        ]
+        
+    def inference(self, prompt: str, image_path: str):
+        """
+        Processes a user prompt and returns the agent's output along with the conversation history.
+
+        Args:
+            prompt (str): The user prompt to be processed.
+
+        Returns:
+            tuple: A tuple containing the raw output from the model (or converted output if a template is provided)
+                   and the updated conversation history.
+        """
+        logger.info(f"Agent inference with prompt: {prompt}")
+        self.conversation.append(
+            {
+                "role": "user", 
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                          "url": utils.embed_file_to_base_64(image_path),
+                          "detail" : self.fidelity
+                        }
+                    }
+                ]
+            }
+        )
+        raw_output = self._complete()
+        self.conversation.append({"role": "system", "content": raw_output})
+
+        return raw_output, self.conversation
+
+    def clear_converstation(self):
+        """Cleares conversation back to system prompt only"""
+
+        self.conversation = [
+            {"role": "system", "content": self.system_prompt},
+        ]
+    
+    def _complete(self):
+        """
+        Completes the current conversation by sending it to the OpenAI API and receiving a response.
+
+        Returns:
+            str: The content of the response from the model.
+        """
+        completion = self.client.chat.completions.create(
+            model=self.openai_model, messages=self.conversation
+        )
+        chat_response = completion.choices[0].message.content
+        return chat_response
