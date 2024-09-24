@@ -1,0 +1,7 @@
+MAIN_SYSTEM_PROMPT = """
+
+"""
+
+SCENE_DESCRIPTION_SYSTEM_PROMPT = """
+
+"""
