@@ -1,9 +1,21 @@
 import re
+import logging
 from enum import StrEnum
 import base64
 
+logger = logging.getLogger(__name__)
 
 def check_dict(template_dict: dict, test_dict: dict):
+    """
+    Checks if two dicts share the same structure
+
+    Args:
+        template_dict (dict): the dict showing proper structure
+        test_dict (dict): dict to be tested against template_dict
+
+    Returns:
+        boolean: True if both dicts have the same structure, False if not
+    """
     if (
         template_dict.keys() == dict.keys()
     ):  # Check if the same keys are shared between dicts
@@ -26,7 +38,16 @@ def check_dict(template_dict: dict, test_dict: dict):
         return False
 
 
-def embed_file_to_base_64(file_path):
+def embed_file_to_base_64(file_path:str):
+    """
+    Loads from file path and embedes file to base64 string
+    
+    Args:
+        file_path(str): Filepath to file to me embeded
+    
+    Returns:
+        string: Base64 encoded string
+    """
     print(f"Embeding {file_path} to base 64 string")
 
     # Read file content
@@ -39,19 +60,41 @@ def embed_file_to_base_64(file_path):
     return base64_bytes
 
 
-def try_to_run_code(code_string):
-    """Tries to run gpt generated code and returns error string if failed"""
+def try_to_run_code(code_string:str):
+    """
+    Attempts to execute a provided code string and logs the outcome.
+
+    Args:
+        code_string(str): The Python code to be executed, provided as a string.
+
+    Returns:
+        str or None:
+            Returns a string containing the exception message if execution fails.
+            Returns `None` if the code executes successfully without exceptions.
+    """
+    
     try:
         exec(code_string, globals())
-        print("Generated code passed and is executed")
+        logger.info("Generated code passed static check and is executed")
         return
     except Exception as e:
-        print(f"Generated code failed and gave exception: {e}")
+        logger.warning(f"Generated code failed static check and gave exception: {e}")
         return str(e)
 
 
 def static_code_check(code_string):
-    """Performs a series of static checks for potential issues."""
+    """
+    Performs static analysis on a code string to identify potential security and safety risks.
+
+    Parameters:
+    code_string : str
+        A string containing Python code to analyze for static issues.
+
+    Returns:
+    str or None
+        Returns a string listing each issue found, with each issue on a new line.
+        Returns `None` if no issues are detected.
+    """
     issues = []
 
     imports = re.findall(r"[^#]*import [^\n#]+", code_string)

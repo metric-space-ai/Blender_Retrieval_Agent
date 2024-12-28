@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def get_single_hierarchy(obj, level=0):
     "Recursively retrieves the hierarchy of objects starting from the given object."
     indent = "-" * (level + 1)
@@ -21,6 +22,7 @@ def get_all_objects_hierarchy():
     for obj in bpy.context.scene.objects:
         if obj.parent is None:  # Only include root objects
             hierarchy_string += get_single_hierarchy(obj, 0)
+    logger.info("Scene hierarchy string generated")
     return hierarchy_string
 
 
@@ -75,45 +77,47 @@ def get_scene_static_info():
         scene_info["bounding_box"] = [min_corner, max_corner]
 
     logger.info(f"Scene info gathered, scene raw info is: \n {scene_info}")
-    
+
     return scene_info
+
 
 def render_image(filename: str, camera_name: str):
     """
     Renders a single image in Blender using a specified camera and saves it to a file.
-    
+
     Args:
-        filename (str): The file path where the rendered image will be saved. 
+        filename (str): The file path where the rendered image will be saved.
                         Should include the file extension (e.g., 'render.png').
         camera_name (str): The name of the camera to use for rendering. It must match
                            the name of a camera object in the scene.
-    
+
     Raises:
         AssertionError: If the specified camera is not found in the scene.
     """
-    
-    #Handle extension and no extension of the filename
+
+    # Handle extension and no extension of the filename
     if filename.endswith(".jpg"):
         pass
     else:
         filename = filename + ".jpg"
-    
+
     # Find the camera object by name
     camera = bpy.data.objects.get(camera_name)
-    
+
     assert camera, f"Camera '{camera_name}' not found in the scene."
-    
+
     # Set the active scene camera to the specified camera
     bpy.context.scene.camera = camera
-    
+
     # Set the output file path
     bpy.context.scene.render.filepath = filename
-    
+
     # Render the image
+    logger.info("Rendering an image")
     bpy.ops.render.render(write_still=True)
-    
-    #wait for image to be save to the drive     
+
+    # wait for image to be save to the drive
     while os.path.exists(filename) == False:
         time.sleep(2)
-    
+
     logger.info(f"Rendered image saved to '{filename}' using camera '{camera_name}'")
